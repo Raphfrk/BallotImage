@@ -1,4 +1,4 @@
-package org.spout.engine.world;
+package com.raphfrk.ballotimage.gui;
 
 import static org.junit.Assert.*;
 
