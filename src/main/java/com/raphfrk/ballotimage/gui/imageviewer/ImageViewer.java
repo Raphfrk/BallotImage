@@ -124,6 +124,9 @@ public class ImageViewer extends JPanel {
 		currentImage = index;
 		noteLabel.setText("Label: " + label);
 		imageData = ImageUtils.zoomNearest(imageData, ZOOM);
+		byte[][] filter = ImageUtils.genCircleFilter(ZOOM);
+		imageData = ImageUtils.filter(imageData, filter);
+		imageData = ImageUtils.filter(imageData, filter);
 		imagePanel.setImage(imageData);
 		updatePosition();
 		this.revalidate();
