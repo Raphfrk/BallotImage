@@ -43,4 +43,15 @@ public class VarByteArrayLeaf extends VarByteArray {
 		return array.length;
 	}
 	
+	@Override
+	public int size(int index) {
+		if (index < 0) {
+			throw new IllegalArgumentException("Negative indexes are not allowed");
+		} else if (index == 0) {
+			return size();
+		} else {
+			throw new IllegalArgumentException("Index larger the the number of dimensions");
+		}
+	}
+	
 }

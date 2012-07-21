@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -15,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 /**
@@ -26,7 +25,8 @@ public class GUIMain extends JFrame {
 	
 	private final JLabel statusBar;
 	private final LinkedList<String> statusStrings = new LinkedList<String>();
-	private Component activeComp = null;
+	private final JPanel activePanel;
+	private Component activeComponent = null;
 
 	public static void main( String[] args ) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -52,10 +52,13 @@ public class GUIMain extends JFrame {
         getContentPane().add(statusBar, BorderLayout.SOUTH);
         statusBar.setBorder(BorderFactory.createEtchedBorder());
         
+        activePanel = new JPanel();
+        getContentPane().add(activePanel, BorderLayout.CENTER);
+        
         setTitle("BallotImage");
         setSize(600, 200);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        
+        this.setResizable(false);
 	}
 	
 	public void setStatusBar(final String text) {
@@ -94,20 +97,15 @@ public class GUIMain extends JFrame {
 	public void setActiveComponent(final Component comp) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				if (activeComp != null) {
-					getContentPane().remove(activeComp);
-					if (activeComp instanceof Closeable) {
-						try {
-							((Closeable) activeComp).close();
-						} catch (IOException ioe) {
-						}
-					}
+				if (activeComponent != null) {
+					activePanel.remove(activeComponent);
 				}
-				activeComp = comp;
+				activeComponent = comp;
 				if (comp != null) {
-					getContentPane().add(comp, BorderLayout.CENTER);
+					activePanel.add(comp);
 				}
-				getContentPane().revalidate();
+				pack();
+				revalidate();
 			}
 		});
 	}

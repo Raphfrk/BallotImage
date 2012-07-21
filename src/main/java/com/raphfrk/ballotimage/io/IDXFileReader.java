@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.raphfrk.ballotimage.gui.GUIMainActionListener;
+import com.raphfrk.ballotimage.gui.imageviewer.ImageViewer;
 import com.raphfrk.ballotimage.io.vararray.VarByteArray;
 
 public class IDXFileReader extends Thread {
@@ -69,7 +70,7 @@ public class IDXFileReader extends Thread {
 				return;
 			}
 			
-			//listener.getParent().setActiveComponent(new JLabel("Testing 123"));
+			createImagePanel(labelArray, imageArray);
 			
 		} finally {
 			listener.getParent().unsetStatusBar(statusText);
@@ -132,6 +133,14 @@ public class IDXFileReader extends Thread {
 			}
 		}
 		
+	}
+	
+	private void createImagePanel(final VarByteArray labelArray, final VarByteArray imageArray) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				listener.getParent().setActiveComponent(new ImageViewer(labelArray, imageArray));
+			}
+		});
 	}
 	
 	private void safeMessage(final String title, final String message, final int type) {

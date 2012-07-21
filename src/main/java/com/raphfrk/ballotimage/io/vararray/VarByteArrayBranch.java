@@ -54,6 +54,17 @@ public class VarByteArrayBranch extends VarByteArray {
 	public int size() {
 		return subArrays.length;
 	}
+	
+	@Override
+	public int size(int index) {
+		if (index < 0) {
+			throw new IllegalArgumentException("Negative indexes are not allowed");
+		} else if (index == 0) {
+			return size();
+		} else {
+			return subArrays[0].size(index - 1);
+		}
+	}
 
 
 }

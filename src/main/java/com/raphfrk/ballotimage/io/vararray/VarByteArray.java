@@ -69,6 +69,14 @@ public abstract class VarByteArray {
 	public abstract int size();
 	
 	/**
+	 * Gets the size of the nth sub array
+	 * 
+	 * @input index 0 for the outer array
+	 * @return
+	 */
+	public abstract int size(int index);
+	
+	/**
 	 * Creates an new VarByteArray instance
 	 * @param sizes
 	 * @return
