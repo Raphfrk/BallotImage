@@ -1,6 +1,6 @@
 package com.raphfrk.ballotimage.gui.imageviewer;
 
-import javax.swing.JOptionPane;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ImageUtils {
 	
@@ -98,6 +98,66 @@ public class ImageUtils {
 			}
 		}
 		return ret;
+	}
+	
+	private final static AtomicReference<float[][][]> coeffRoot = new AtomicReference<float[][][]>();
+	
+	/**
+	 * Gets the spline coefficients for a given order and offset
+	 * 
+	 * @param n the order of the spline
+	 * @param x the sub-sample offset
+	 * @return
+	 */
+	public static float[] getSplineCoefficients(int n, float x) {
+		float[][][] root = coeffRoot.get();
+		if (root == null || root.length <= n) {
+			expandSplineRoots(n);
+			root = coeffRoot.get();
+		}
+		float[][] orderCoeff = root[n];
+		
+		float[] coeffs = new float[n + 1];
+		
+		for (int i = 0; i <= n; i++) {
+			float[] current = orderCoeff[i];
+
+			float temp = 0;
+			for (int j = 0; j <= n; j++) {
+				temp = (temp * x) + current[n - j];
+			}
+
+			coeffs[i] = temp;
+		}
+		
+		return coeffs;
+		
+	}
+	
+	private static synchronized void expandSplineRoots(int n) {
+		float[][][] oldRoot = coeffRoot.get();
+		if (oldRoot != null && oldRoot.length > n) {
+			return;
+		}
+		
+		float[][][] newRoot = new float[n + 1][][];
+		
+		// Coefficient for zeroth order spline
+		newRoot[0] = new float[][] {{1.0F}};
+		
+		// Compute coefficients for each spline order based on the coefficients from the previous order
+		for (int o = 1; o < n + 1; o++) {
+			newRoot[o] = new float[o + 1][o + 1];
+			for (int i = 0; i < o; i++) {
+				for (int p = 0; p < o; p++) {
+					newRoot[o][i][p + 1] += newRoot[o - 1][i][p] / (p + 1);
+					newRoot[o][i + 1][p + 1] -= newRoot[o - 1][i][p] / (p + 1);
+					newRoot[o][i + 1][0] += newRoot[o - 1][i][p] / (p + 1);
+				}
+			}
+		}
+		
+		coeffRoot.set(newRoot);
 	}
 
 }
