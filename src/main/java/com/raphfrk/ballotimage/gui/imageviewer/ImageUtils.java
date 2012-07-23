@@ -100,6 +100,88 @@ public class ImageUtils {
 		return ret;
 	}
 	
+	/**
+	 * Gets the index of the first array element required to interpolate to (x + dx).  
+	 * If the method returns i, then all array elements from i to (i + n), inclusive, must be 
+	 * present in the array, in order to perform spline interpolation.<br>
+	 * The returned value may be out of range for the array
+	 * 
+	 * @param n the order of the spline
+	 * @param x the integer portion of the coordinate
+	 * @param dx the fractional portion of the coordinate (0 <= dx < 1)
+	 * @return the index of the first array element
+	 */
+	public static int getFirstSplineIndex(int n, int x, float dx) {
+		int width = n + 1;
+		
+		if (width % 2 == 1) {
+			x = x - (width >> 1);
+		} else if (dx > 0.5F) {
+			x = x - (width >> 1) + 1;
+		} else {
+			x = x - (width >> 1);
+		}
+		
+		return x;
+	}
+	
+	/**
+	 * Interpolates to the given location using an nth order spline
+	 * 
+	 * @param n the order of the spline
+	 * @param data the data
+	 * @param x the coordinate
+	 * @return the interpolated value
+	 */
+	public static float splineInterpolate(int n, byte[] data, float x) {
+		int xx = (int) Math.floor(x);
+		float dx = x - xx;
+		return splineInterpolate(n, data, xx, dx);
+	}
+	
+	/**
+	 * Interpolates to the given location using an nth order spline
+	 * 
+	 * @param n the order of the spline
+	 * @param data the data
+	 * @param x the integer portion of the coordinate
+	 * @param dx the fractional portion of the coordinate (0 <= dx < 1)
+	 * @return the interpolated value
+	 */
+	public static float splineInterpolate(int n, byte[] data, int x, float dx) {
+		x = getFirstSplineIndex(n, x, dx);
+
+		int width = n + 1;
+		if (width % 2 == 0) {
+			if (dx > 0.5F) {
+				dx = dx - 0.5F;
+			} else {
+				dx = dx + 0.5F;
+			}
+		}
+		
+		float[] coeffs = getSplineCoefficients(n, 1.0F - dx);
+		
+		float temp = 0F;
+		int j = x;
+		
+		for (int i = 0; i < coeffs.length; i++) {
+			int satJ = j++;
+			if (satJ < 0) {
+				satJ = 0;
+			} else if (satJ >= data.length){
+				satJ = data.length - 1;
+			}
+			temp += coeffs[i] * (data[satJ] & 0xFF);
+		}
+		
+		return temp;
+		
+	}
+
+	/**
+	 * The spline coefficient cache
+	 */
 	private final static AtomicReference<float[][][]> coeffRoot = new AtomicReference<float[][][]>();
 	
 	/**

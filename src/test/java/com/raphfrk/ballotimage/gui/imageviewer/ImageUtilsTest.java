@@ -1,6 +1,6 @@
 package com.raphfrk.ballotimage.gui.imageviewer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -61,6 +61,38 @@ public class ImageUtilsTest {
 			target[i] = total / l;
 			
 		}
+		
+	}
+	
+	@Test
+	public void splineInterpTest() {
+		
+		int o = 2;
+		
+		byte h = (byte) 0xFF;
+		byte l = (byte) 0x00;
+		
+		byte[] data = {l, l, l, l, h, l, l, l, l, l};
+		
+		float peak = 0;
+		float maxValue = -Float.MAX_VALUE;
+		float prev = -Float.MAX_VALUE;
+		
+		for (float x = -5; x <= 15; x += 0.1) {
+			float result = ImageUtils.splineInterpolate(o, data, x);
+			if (result > maxValue) {
+				peak = x;
+				maxValue = result;
+			}
+			if (x < 4.49) {
+				assertTrue("Result is not monotonic increasing before peak", result >= prev);
+			} else if (x > 4.51) {
+				assertTrue("Result is not monotonic decreasing after peak", result <= prev);
+			}
+			prev = result;
+		}
+		
+		assertTrue("Peak is in the wrong position " + peak, Math.abs(peak - 4.5F) < 0.01);
 		
 	}
 
