@@ -69,10 +69,10 @@ public class ImageUtilsTest {
 		
 		int o = 2;
 		
-		byte h = (byte) 0xFF;
-		byte l = (byte) 0x00;
+		float h = 255.0F;
+		float l = 0.0F;
 		
-		byte[] data = {l, l, l, l, h, l, l, l, l, l};
+		float[] data = {l, l, l, l, h, l, l, l, l, l};
 		
 		float peak = 0;
 		float maxValue = -Float.MAX_VALUE;

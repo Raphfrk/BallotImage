@@ -1,6 +1,7 @@
 package com.raphfrk.ballotimage.gui.imageviewer;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
@@ -16,8 +17,9 @@ public class ImageViewer extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	private static final int ZOOM = 16;
+	private static final int IMAGE_SIZE = 512;
 	
-	private final byte[][][] images;
+	private final float[][][] images;
 	private final int[] labels;
 	private int currentImage = 0;
 	private final ImagePanel imagePanel;
@@ -29,12 +31,12 @@ public class ImageViewer extends JPanel {
 		int s1 = images.size(1);
 		int s2 = images.size(2);
 		
-		this.images = new byte[s0][s1][s2];
+		this.images = new float[s0][s1][s2];
 		
 		for (int i0 = 0; i0 < s0; i0++) {
 			for (int i1 = 0; i1 < s1; i1++) {
 				for (int i2 = 0; i2 < s2; i2++) {
-					this.images[i0][i1][i2] = images.get(i0, i1, i2);
+					this.images[i0][i1][i2] = images.get(i0, i1, i2) & 0xFF;
 				}
 			}
 		}
@@ -50,6 +52,7 @@ public class ImageViewer extends JPanel {
 		setLayout(new BorderLayout());
 		
 		imagePanel = new ImagePanel(ImageUtils.zoomNearest(this.images[0], ZOOM));
+		imagePanel.setPreferredSize(new Dimension(IMAGE_SIZE, IMAGE_SIZE));
 		
 		add(imagePanel, BorderLayout.NORTH);
 		
@@ -120,13 +123,10 @@ public class ImageViewer extends JPanel {
 		positionBox.setText(Integer.toString(currentImage + 1));
 	}
 	
-	private void setImage(int index, int label, byte[][] imageData) {
+	private void setImage(int index, int label, float[][] imageData) {
 		currentImage = index;
 		noteLabel.setText("Label: " + label);
-		imageData = ImageUtils.zoomNearest(imageData, ZOOM);
-		byte[][] filter = ImageUtils.genCircleFilter(ZOOM);
-		imageData = ImageUtils.filter(imageData, filter);
-		imageData = ImageUtils.filter(imageData, filter);
+		imageData = ImageUtils.splineFit(3, imageData, IMAGE_SIZE, IMAGE_SIZE);
 		imagePanel.setImage(imageData);
 		updatePosition();
 		this.revalidate();

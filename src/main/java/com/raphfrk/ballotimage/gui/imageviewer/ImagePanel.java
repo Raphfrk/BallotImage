@@ -4,10 +4,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.BorderFactory;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -17,13 +15,13 @@ public class ImagePanel extends JPanel {
 	
 	private BufferedImage img = null;
 	
-	public ImagePanel(byte[][] brightness) {
+	public ImagePanel(float[][] brightness) {
 		setImageRaw(brightness);
 		setBorder(BorderFactory.createEtchedBorder());
 		setVisible(true);
 	}
 
-	public void setImage(final byte[][] brightness) {
+	public void setImage(final float[][] brightness) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				setImageRaw(brightness);
@@ -31,7 +29,7 @@ public class ImagePanel extends JPanel {
 		});
 	}
 	
-	private void setImageRaw(byte[][] brightness) {
+	private void setImageRaw(float[][] brightness) {
 		int sy = brightness.length;
 		int sx = brightness[0].length;
 		
@@ -41,10 +39,15 @@ public class ImagePanel extends JPanel {
 		
 		for (int y = 0; y < sy; y++) {
 			for (int x = 0; x < sx; x++) {
-				int br = 255 - brightness[y][x];
-				int r = br & 0xFF;
-				int g = br & 0xFF;
-				int b = br & 0xFF;
+				int br = 255 - Math.round(brightness[y][x]);
+				if (br > 255) {
+					br = 255;
+				} else if (br < 0) {
+					br = 0;
+				}
+				int r = br;
+				int g = br;
+				int b = br;
 				br = r << 16 | g << 8 | b << 0;
 				img.setRGB(x, y, br);
 			}

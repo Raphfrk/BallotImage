@@ -1,17 +1,18 @@
 package com.raphfrk.ballotimage.gui.imageviewer;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ImageUtils {
 	
-	public static byte[][] zoomNearest(byte[][] in, int zoom) {
+	public static float[][] zoomNearest(float[][] in, int zoom) {
 		int sy = in.length;
 		int sx = in[0].length;
 		
 		int zy = sy * zoom;
 		int zx = sx * zoom;
 		
-		byte[][] ret = new byte[zy][zx];
+		float[][] ret = new float[zy][zx];
 		
 		int ix = -1;
 		int iy = -1;
@@ -31,12 +32,12 @@ public class ImageUtils {
 		return ret;
 	}
 	
-	public static byte[][] filter(byte[][] in, byte[][] filter) {
+	public static float[][] filter(float[][] in, float[][] filter) {
 		
 		int sy = in.length;
 		int sx = in[0].length;
 		
-		byte[][] ret = new byte[sy][sx];
+		float[][] ret = new float[sy][sx];
 		
 		int fsy = filter.length;
 		int fsx = filter[0].length;
@@ -57,7 +58,7 @@ public class ImageUtils {
 		
 		for (int x = 0; x < sx; x++) {
 			for (int y = 0; y < sy; y++) {
-				int sum = 0;
+				float sum = 0;
 				for (int fx = 0; fx < fsx; fx++) {
 					for (int fy = 0; fy < fsy; fy++) {
 						int xo = fx + x - fcx;
@@ -65,17 +66,17 @@ public class ImageUtils {
 						if (xo < 0 || xo >= sx || yo < 0 || yo >= sy) {
 							continue;
 						}
-						sum += (in[yo][xo] & 0xFF) * filter[fx][fy];
+						sum += in[yo][xo] * filter[fx][fy];
 					}
 				}
 				sum /= fsum;
-				byte result = 0;
+				float result = 0;
 				if (sum > 255) {
-					result = (byte) 255;
+					result = 255;
 				} else if (sum < 0) {
-					result = (byte) 0;
+					result = 0;
 				} else {
-					result = (byte) sum;
+					result = sum;
 				}
 				ret[y][x] = result;
 			}
@@ -84,10 +85,10 @@ public class ImageUtils {
 		return ret;
 	}
 	
-	public static byte[][] genCircleFilter(int radius) {
+	public static float[][] genCircleFilter(int radius) {
 		int size = radius * 2 + 1;
 		int radiusSquared = radius * radius;
-		byte[][] ret = new byte[size][size];
+		float[][] ret = new float[size][size];
 		for (int x = -radius; x <= radius; x++) {
 			for (int y = -radius; y <= radius; y++) {
 				if (x * x + y * y <= radiusSquared) {
@@ -98,6 +99,94 @@ public class ImageUtils {
 			}
 		}
 		return ret;
+	}
+
+	/**
+	 * Expands/shrinks the given image data to fit in a tx * ty array, keeping the aspect ratio fixed
+	 * 
+	 * @param n the order
+	 * @param data the input data
+	 * @param tx the x dimension of the output array
+	 * @param ty the y dimension of the output array
+	 * @return
+	 */
+	public static float[][] splineFit(int n, float[][] data, int tx, int ty) {
+		return splineFit(n, data, tx, ty, true);
+	}
+	
+	/**
+	 * Expands/shrinks the given image data to fit in a tx * ty array.
+	 * 
+	 * @param n the order
+	 * @param data the input data
+	 * @param tx the x dimension of the output array
+	 * @param ty the y dimension of the output array
+	 * @param lockAspectRatio true to keep the aspect ratio fixed
+	 * @return
+	 */
+	public static float[][] splineFit(int n, float[][] data, int tx, int ty, boolean lockAspectRatio) {
+		
+		float zx = ((float) tx) / data[0].length;
+		float zy = ((float) ty) / data.length;
+		
+		if (lockAspectRatio) {
+			if (zx > zy) {
+				zx = zy;
+			} else {
+				zy = zx;
+			}
+		}
+		
+		float[][] out = new float[ty][tx];
+		
+		float izy = 1.0F / zy;
+		float izx = 1.0F / zx;
+
+		for (int y = 0; y < ty; y++) {
+			float py = y * izy;
+			float[] row = out[y];
+			for (int x = 0; x < tx; x++) {
+				float px = x * izx;
+				row[x] = spline2DInterpolate(n, data, px, py);
+			}
+		}
+		
+		return out;
+
+	}
+	
+	/**
+	 * Computes the interpolated value at coordinates (x, y) using nth order Spline interpolation
+	 * 
+	 * @param n the order
+	 * @param data the input data
+	 * @param x the x coordinate
+	 * @param y the y coordinate
+	 * @return
+	 */
+	public static float spline2DInterpolate(int n, float[][] data, float x, float y) {
+		
+		float[] temp = new float[n + 1];
+		
+		int yy = (int) Math.floor(y);
+		float dy = y - yy;
+		
+		int iy = getFirstSplineIndex(n, yy, dy);
+		
+		for (int i = 0; i <= n; i++) {
+			int ySat = i + iy;
+			if (ySat < 0) {
+				ySat = 0;
+			} else if (ySat >= data.length) {
+				ySat = data.length - 1;
+			}
+			temp[i] = splineInterpolate(n, data[ySat], x);
+		}
+		
+		yy -= iy;
+		
+		return splineInterpolate(n, temp, yy, dy);
+		
 	}
 	
 	/**
@@ -133,7 +222,7 @@ public class ImageUtils {
 	 * @param x the coordinate
 	 * @return the interpolated value
 	 */
-	public static float splineInterpolate(int n, byte[] data, float x) {
+	public static float splineInterpolate(int n, float[] data, float x) {
 		int xx = (int) Math.floor(x);
 		float dx = x - xx;
 		return splineInterpolate(n, data, xx, dx);
@@ -148,7 +237,7 @@ public class ImageUtils {
 	 * @param dx the fractional portion of the coordinate (0 <= dx < 1)
 	 * @return the interpolated value
 	 */
-	public static float splineInterpolate(int n, byte[] data, int x, float dx) {
+	public static float splineInterpolate(int n, float[] data, int x, float dx) {
 		x = getFirstSplineIndex(n, x, dx);
 
 		int width = n + 1;
@@ -172,7 +261,7 @@ public class ImageUtils {
 			} else if (satJ >= data.length){
 				satJ = data.length - 1;
 			}
-			temp += coeffs[i] * (data[satJ] & 0xFF);
+			temp += coeffs[i] * data[satJ];
 		}
 		
 		return temp;
